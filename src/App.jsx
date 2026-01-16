@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,6 +14,8 @@ import MockTestsPage from './pages/MockTestsPage';
 import QuizzesPage from './pages/QuizzesPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import QuizInterfacePage from './pages/QuizInterfacePage';
+import FocusModePage from './pages/FocusModePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AboutUs from './pages/AboutUs';
@@ -48,36 +52,43 @@ const HomePage = () => (
 );
 
 function App() {
+  const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+
   return (
-    <Router>
-      <ThemeProvider>
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <Router>
+          <ThemeProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
 
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/exams" element={<AllExamsPage />} />
-              <Route path="/exams/:examId" element={<ExamDetailPage />} />
-              <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
-              <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
-              <Route path="/exams/:examId/mock-tests" element={<MockTestsPage />} />
-              <Route path="/quizzes" element={<QuizzesPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-            </Routes>
-          </main>
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/exams" element={<AllExamsPage />} />
+                  <Route path="/exams/:examId" element={<ExamDetailPage />} />
+                  <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
+                  <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
+                  <Route path="/exams/:examId/mock-tests" element={<MockTestsPage />} />
+                  <Route path="/quizzes" element={<QuizzesPage />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/about" element={<AboutUs />} />
+                  <Route path="/contact" element={<ContactUs />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/quiz" element={<QuizInterfacePage />} />
+                </Routes>
+              </main>
 
-          <Footer />
-        </div>
-      </ThemeProvider>
-    </Router>
+              <Footer />
+            </div>
+          </ThemeProvider>
+        </Router>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

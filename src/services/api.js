@@ -1,12 +1,26 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const fetchAllExams = async () => {
+export const fetchAllExams = async (category = null) => {
     try {
-        const response = await fetch(`${API_URL}/exams`);
-        if (!response.ok) throw new Error('Network response was not ok');
+        let url = `${API_URL}/exams`;
+        if (category) url += `?category=${category}`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch exams');
         return await response.json();
     } catch (error) {
-        console.error("Failed to fetch exams:", error);
+        console.error("API Error:", error);
+        return [];
+    }
+};
+
+export const fetchCategories = async () => {
+    try {
+        const response = await fetch(`${API_URL}/categories`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
         return [];
     }
 };

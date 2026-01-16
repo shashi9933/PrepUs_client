@@ -51,7 +51,9 @@ const AllExamsPage = () => {
     const filteredExams = exams.filter(exam => {
         const matchesSearch = exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             exam.subtitle.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory ? exam.category === selectedCategory || exam.title.includes(selectedCategory) : true;
+        const matchesCategory = selectedCategory
+            ? (exam.category?.toLowerCase() === selectedCategory.toLowerCase() || exam.title.toLowerCase().includes(selectedCategory.toLowerCase()))
+            : true;
 
         return matchesSearch && matchesCategory;
     });
@@ -85,8 +87,8 @@ const AllExamsPage = () => {
                             key={cat}
                             onClick={() => setSelectedCategory(cat === 'All' ? null : cat)}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${(selectedCategory === cat) || (!selectedCategory && cat === 'All')
-                                    ? 'bg-blue-600 text-white shadow-lg scale-105'
-                                    : `bg-white/5 ${theme.text} hover:bg-white/10 border ${theme.border}`
+                                ? 'bg-blue-600 text-white shadow-lg scale-105'
+                                : `bg-white/5 ${theme.text} hover:bg-white/10 border ${theme.border}`
                                 }`}
                         >
                             {cat}
@@ -126,7 +128,7 @@ const AllExamsPage = () => {
                                             </div>
                                             <div className="text-xs text-right">
                                                 <span className="block text-gray-500">Exam Date</span>
-                                                <span className={`font-semibold ${theme.text}`}>{exam.dates.examDate}</span>
+                                                <span className={`font-semibold ${theme.text}`}>{exam.dates?.examDate || 'TBD'}</span>
                                             </div>
                                         </div>
                                     </div>

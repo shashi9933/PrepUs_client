@@ -2,11 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { ArrowRight } from 'lucide-react';
 import AimBoard from './AimBoard';
+import ExamSelectionModal from './ExamSelectionModal';
+import FocusConfigModal from './FocusConfigModal';
+import { useState } from 'react';
+import { Zap } from 'lucide-react';
 
 const HeroSection = () => {
     const { theme, currentTheme } = useTheme();
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
 
     // Particle System Effect
     useEffect(() => {
@@ -17,8 +23,8 @@ const HeroSection = () => {
         let animationFrameId;
         let particles = [];
         const particleCount = 60;
-        const connectionDistance = 150;
-        const mouseSafetyRadius = 200;
+        const connectionDistance = 250;
+        const mouseSafetyRadius = 250;
 
         let mouse = { x: null, y: null };
 
@@ -178,21 +184,21 @@ const HeroSection = () => {
 
             {/* Background Gradient Blob (Preserved for aesthetic depth) */}
             <div className={`absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-3xl opacity-10 pointer-events-none ${theme.name === 'Neon' ? 'bg-cyan-500' :
-                    theme.name === 'Matrix' ? 'bg-emerald-500' :
-                        theme.name === 'Light' ? 'bg-blue-300' : 'bg-blue-600'
+                theme.name === 'Matrix' ? 'bg-emerald-500' :
+                    theme.name === 'Light' ? 'bg-blue-300' : 'bg-blue-600'
                 } -translate-y-1/2 translate-x-1/2`}></div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 
                     {/* Text Content */}
                     <div className="text-left space-y-8 select-none">
                         <h1 className={`text-6xl md:text-7xl font-bold leading-tight ${theme.text} tracking-tight`}>
                             MASTER <br />
                             <span className={`text-transparent bg-clip-text ${theme.name === 'Neon' ? 'bg-gradient-to-r from-cyan-400 to-purple-400' :
-                                    theme.name === 'Matrix' ? 'bg-gradient-to-r from-emerald-400 to-green-600' :
-                                        theme.name === 'Light' ? 'bg-gradient-to-r from-blue-600 to-indigo-600' :
-                                            'bg-gradient-to-r from-blue-400 to-indigo-400'
+                                theme.name === 'Matrix' ? 'bg-gradient-to-r from-emerald-400 to-green-600' :
+                                    theme.name === 'Light' ? 'bg-gradient-to-r from-blue-600 to-indigo-600' :
+                                        'bg-gradient-to-r from-blue-400 to-indigo-400'
                                 }`}>
                                 CURRENT AFFAIRS
                             </span>
@@ -209,15 +215,26 @@ const HeroSection = () => {
                             ))}
                         </div>
 
-                        <div className="flex space-x-4">
-                            <button className={`${theme.accent} ${theme.accentHover} text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg transform hover:scale-105 transition-all flex items-center group ring-2 ring-offset-2 ring-transparent hover:ring-white/20`}>
+                        <div className="flex flex-wrap gap-4">
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className={`${theme.accent} ${theme.accentHover} text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg transform hover:scale-105 transition-all flex items-center group ring-2 ring-offset-2 ring-transparent hover:ring-white/20`}
+                            >
                                 START FREE QUIZ
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button
+                                onClick={() => setIsFocusModalOpen(true)}
+                                className={`px-8 py-4 rounded-full text-lg font-bold border ${theme.border} ${theme.text} hover:bg-white/10 backdrop-blur-sm transition-all flex items-center group`}
+                            >
+                                <Zap className="mr-2 w-5 h-5 text-yellow-400 group-hover:scale-110 transition-transform" />
+                                ENTER FOCUS MODE
                             </button>
                         </div>
                     </div>
 
-                    {/* Aim Board Visual */}
+                    {/* Aim Board Visual - Adjusted Spacing/Border */}
                     <div className="relative flex justify-center items-center">
                         <div className="relative z-10">
                             <AimBoard />
@@ -225,12 +242,22 @@ const HeroSection = () => {
 
                         {/* Subtle Glow behind the target */}
                         <div className={`absolute inset-0 blur-3xl opacity-20 ${theme.name === 'Neon' ? 'bg-cyan-500' :
-                                theme.name === 'Matrix' ? 'bg-emerald-500' : 'bg-blue-500'
+                            theme.name === 'Matrix' ? 'bg-emerald-500' : 'bg-blue-500'
                             } rounded-full`}></div>
                     </div>
 
                 </div>
             </div>
+
+            <ExamSelectionModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
+
+            <FocusConfigModal
+                isOpen={isFocusModalOpen}
+                onClose={() => setIsFocusModalOpen(false)}
+            />
         </div>
     );
 };
