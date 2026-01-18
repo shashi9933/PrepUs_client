@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Mail, Lock, ArrowRight, CheckCircle, Star } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import logo from '../assets/branding-logo.png';
 
 const LoginPage = () => {
     const { theme } = useTheme();
@@ -34,7 +35,7 @@ const LoginPage = () => {
 
                 <div className="relative z-10 space-y-8">
                     <div>
-                        <Shield className="w-16 h-16 text-blue-500 mb-6" />
+                        <img src={logo} alt="PrepUs" className="h-32 mb-6 object-contain" />
                         <h1 className="text-5xl font-bold leading-tight mb-4">
                             Master Your <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">

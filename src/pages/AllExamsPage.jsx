@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { fetchAllExams } from '../services/api';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, X, Loader2, Award, Building2, Briefcase, Users, Train, Globe, Building, FileText } from 'lucide-react';
+import { Search, X, Award, Building2, Briefcase, Users, Train, Globe, Building, FileText } from 'lucide-react';
+import VideoLoader from '../components/VideoLoader';
 
 const iconMap = {
     'Banking': Briefcase,
@@ -98,9 +99,7 @@ const AllExamsPage = () => {
 
                 {/* Loading State */}
                 {loading ? (
-                    <div className="flex justify-center items-center py-24">
-                        <Loader2 className={`w-12 h-12 animate-spin ${theme.text}`} />
-                    </div>
+                    <VideoLoader />
                 ) : (
                     /* Grid */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { fetchExamById } from '../services/api';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Calendar, CheckCircle, Lock, Target, AlertCircle } from 'lucide-react';
+import VideoLoader from '../components/VideoLoader';
 
 const StudyPlanPage = () => {
     const { examId } = useParams();
@@ -20,11 +21,7 @@ const StudyPlanPage = () => {
     }, [examId]);
 
     if (loading) {
-        return (
-            <div className={`min-h-screen pt-24 text-center ${theme.bg} flex items-center justify-center`}>
-                <Loader2 className={`w-12 h-12 animate-spin ${theme.text}`} />
-            </div>
-        );
+        return <VideoLoader fullScreen={false} />;
     }
 
     if (!exam) return null;

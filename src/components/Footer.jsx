@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { Shield, Facebook, Twitter, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Youtube } from 'lucide-react';
+import logo from '../assets/branding-logo.png';
 
 const Footer = () => {
     const { theme } = useTheme();
@@ -12,8 +13,7 @@ const Footer = () => {
                 <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
 
                     <div className="flex items-center space-x-2">
-                        <Shield className={`w-6 h-6 ${theme.text}`} />
-                        <span className={`text-lg font-bold ${theme.text}`}>PrepUs</span>
+                        <img src={logo} alt="PrepUs" className="h-16 w-auto object-contain" />
                     </div>
 
                     <p className={`text-sm ${theme.textMuted}`}>

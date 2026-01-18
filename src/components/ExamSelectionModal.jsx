@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Check } from 'lucide-react';
+import { X, Search, ChevronRight, Check } from 'lucide-react';
+import VideoLoader from './VideoLoader';
 import { useTheme } from '../context/ThemeContext';
 import { fetchAllExams, fetchCategories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -112,7 +113,7 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
                             </div>
 
                             {loading ? (
-                                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                                <VideoLoader />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                     {filteredExams.map(exam => (

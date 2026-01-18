@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { fetchExamById } from '../services/api';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, BookOpen, User, CheckCircle, Download, Share2 } from 'lucide-react';
+import VideoLoader from '../components/VideoLoader';
 
 // Detail Components
 import ExamHeader from '../components/exam-detail/ExamHeader';
@@ -32,13 +33,7 @@ const ExamDetailPage = () => {
         loadData();
     }, [examId]);
 
-    if (loading) {
-        return (
-            <div className={`min-h-screen pt-24 text-center ${theme.bg} flex items-center justify-center`}>
-                <Loader2 className={`w-12 h-12 animate-spin ${theme.text}`} />
-            </div>
-        );
-    }
+    if (loading) return <VideoLoader />;
 
     if (!exam) {
         return (

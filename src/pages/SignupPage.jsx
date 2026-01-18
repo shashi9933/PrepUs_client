@@ -2,9 +2,10 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, User, Mail, Lock, ArrowRight, TrendingUp, Users, Award } from 'lucide-react';
+import { User, Mail, Lock, CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import logo from '../assets/branding-logo.png';
 
 const SignupPage = () => {
     const { theme } = useTheme();
@@ -33,6 +34,7 @@ const SignupPage = () => {
 
                 <div className="relative z-10 space-y-10">
                     <div>
+                        <img src={logo} alt="PrepUs" className="h-32 mb-6 object-contain" />
                         <h1 className="text-5xl font-bold leading-tight mb-4">
                             Start Your Journey <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">

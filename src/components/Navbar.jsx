@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { Menu, X, ChevronDown, Shield, Palette } from 'lucide-react';
+import logo from '../assets/branding-logo.png';
 
 const Navbar = () => {
     const { theme, currentTheme, setCurrentTheme, themes } = useTheme();
@@ -23,8 +24,7 @@ const Navbar = () => {
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center">
-                            <Shield className={`w-8 h-8 ${theme.text} mr-2`} />
-                            <span className={`text-xl font-bold ${theme.text}`}>PrepUs</span>
+                            <img src={logo} alt="PrepUs Logo" className="h-[5.5rem] w-auto object-contain -my-4" />
                         </Link>
                     </div>
 

@@ -49,13 +49,18 @@ const ExamHeader = ({ exam }) => {
                 </p>
 
                 {/* Quick Info Pills */}
-                <div className="flex flex-wrap gap-4 justify-center w-full overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex flex-wrap gap-4 justify-center w-full overflow-x-auto pb-6 scrollbar-hide">
                     <InfoPill label="Body" value={exam.quickInfo.conductingBody} theme={theme} />
                     <InfoPill label="Level" value={exam.quickInfo.level} theme={theme} />
                     <InfoPill label="Mode" value={exam.quickInfo.mode} theme={theme} />
                     <InfoPill label="Frequency" value={exam.quickInfo.frequency} theme={theme} />
                     <InfoPill label="Vacancies" value={exam.quickInfo.vacancies} theme={theme} />
                 </div>
+
+                {/* Primary CTA: Start Daily Drill */}
+                <a href={`/quiz?exam=${exam.id}`} className="inline-flex items-center px-8 py-3 bg-white text-blue-900 rounded-full font-bold shadow-lg hover:bg-gray-100 hover:scale-105 transition-all text-lg">
+                    <Play className="w-5 h-5 mr-2 fill-current" /> Start Daily Drill
+                </a>
             </div>
         </div>
     );
