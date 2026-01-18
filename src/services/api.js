@@ -123,3 +123,14 @@ export const generateTest = async (payload) => {
         return null;
     }
 };
+
+export const fetchTestById = async (testId) => {
+    try {
+        const response = await fetch(`${API_URL}/tests/${testId}`);
+        if (!response.ok) throw new Error('Failed to fetch test');
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
+        return null;
+    }
+};
