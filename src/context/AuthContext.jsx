@@ -17,15 +17,17 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const login = (userData) => {
+    const login = (userData, token) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        if (token) localStorage.setItem('token', token);
     };
 
     const logout = () => {
         googleLogout();
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
     };
 
     return (

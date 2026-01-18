@@ -22,6 +22,7 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import Terms from './pages/Terms';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import OnboardingPage from './pages/OnboardingPage';
 
 // Home Component (Refactored from previous App.jsx)
 // We create a simpler wrapper for the Landing Page content
@@ -52,7 +53,7 @@ const HomePage = () => (
 );
 
 function App() {
-  const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -80,6 +81,7 @@ function App() {
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/quiz" element={<QuizInterfacePage />} />
+                  <Route path="/onboarding" element={<OnboardingPage />} />
                 </Routes>
               </main>
 

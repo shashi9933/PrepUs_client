@@ -36,6 +36,42 @@ export const fetchExamById = async (id) => {
     }
 };
 
+// Auth
+export const sendOtp = (phone) =>
+    fetch(`${API_URL}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+    }).then(res => res.json());
+
+export const verifyOtp = (phone, otp) =>
+    fetch(`${API_URL}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp }),
+    }).then(res => res.json());
+
+export const updateProfile = (data) =>
+    fetch(`${API_URL}/auth/update-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }).then(res => res.json());
+
+export const register = (data) =>
+    fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }).then(res => res.json());
+
+export const loginEmail = (data) =>
+    fetch(`${API_URL}/auth/login-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }).then(res => res.json());
+
 export const fetchDailyTest = async (examId) => {
     try {
         const response = await fetch(`${API_URL}/tests/daily/${examId}`);
@@ -59,5 +95,16 @@ export const submitTestAttempt = async (payload) => {
     } catch (error) {
         console.error("API Error:", error);
         return null;
+    }
+};
+
+export const fetchAnalytics = async (userId) => {
+    try {
+        const response = await fetch(`${API_URL}/analytics/dashboard?userId=${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
+        return null; // Return null to handle UI loading/error states
     }
 };
