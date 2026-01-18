@@ -4,10 +4,15 @@ import { useTheme } from '../context/ThemeContext';
 import { Menu, X, ChevronDown, Shield, Palette } from 'lucide-react';
 import logo from '../assets/branding-logo.png';
 
+import { useAuth } from '../context/AuthContext';
+// ... (keep other imports)
+
 const Navbar = () => {
     const { theme, currentTheme, setCurrentTheme, themes } = useTheme();
+    const { user, logout } = useAuth(); // Get user state
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isThemeOpen, setIsThemeOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const navItems = [
         { name: 'Home', path: '/' },
@@ -21,14 +26,14 @@ const Navbar = () => {
         <nav className={`fixed w-full z-50 transition-all duration-300 ${theme.sidebar} border-b ${theme.border}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
+                    {/* Logo (Keep as is) */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center">
                             <img src={logo} alt="PrepUs Logo" className="h-[5.5rem] w-auto object-contain -my-4" />
                         </Link>
                     </div>
 
-                    {/* Desktop Menu */}
+                    {/* Desktop Menu (Keep as is) */}
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">
                             {navItems.map((item) => (
@@ -46,7 +51,7 @@ const Navbar = () => {
 
                     {/* Right Side Buttons */}
                     <div className="hidden md:flex items-center space-x-4">
-                        {/* Theme Selector */}
+                        {/* Theme Selector (Keep as is) */}
                         <div className="relative">
                             <button
                                 onClick={() => setIsThemeOpen(!isThemeOpen)}
@@ -76,9 +81,44 @@ const Navbar = () => {
                             )}
                         </div>
 
-                        <Link to="/login" className={`${theme.accent} ${theme.accentHover} text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-lg`}>
-                            Login/Signup
-                        </Link>
+                        {user ? (
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                    className={`flex items-center space-x-2 ${theme.text} hover:opacity-80 transition-opacity`}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    <span className="text-sm font-medium hidden lg:block">{user.name}</span>
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+
+                                {isProfileOpen && (
+                                    <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 ${theme.card} border ${theme.border} z-50`}>
+                                        <div className={`px-4 py-2 text-xs uppercase font-bold ${theme.textMuted} border-b ${theme.border}`}>
+                                            Account
+                                        </div>
+                                        <Link to="/analytics" className={`block px-4 py-2 text-sm ${theme.text} hover:bg-white/5`}>
+                                            Dashboard
+                                        </Link>
+                                        <Link to="/onboarding" className={`block px-4 py-2 text-sm ${theme.text} hover:bg-white/5`}>
+                                            Profile Settings
+                                        </Link>
+                                        <button
+                                            onClick={() => { logout(); setIsProfileOpen(false); }}
+                                            className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-white/5"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link to="/login" className={`${theme.accent} ${theme.accentHover} text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-lg`}>
+                                Login/Signup
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}

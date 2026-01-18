@@ -108,3 +108,18 @@ export const fetchAnalytics = async (userId) => {
         return null; // Return null to handle UI loading/error states
     }
 };
+
+export const generateTest = async (payload) => {
+    try {
+        const response = await fetch(`${API_URL}/tests/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error('Failed to generate test');
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
+        return null;
+    }
+};

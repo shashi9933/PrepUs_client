@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Timer, AlertTriangle, Loader, CheckCircle } from 'lucide-react';
 import VideoLoader from '../components/VideoLoader';
-import { fetchDailyTest, submitTestAttempt } from '../services/api';
+import { fetchDailyTest, submitTestAttempt, fetchTestById } from '../services/api';
 
 const QuizInterfacePage = () => {
     const { theme } = useTheme();
@@ -31,10 +31,18 @@ const QuizInterfacePage = () => {
         if (!user) return navigate('/login');
 
         const examId = searchParams.get('exam');
-        if (!examId) return;
+        const testId = searchParams.get('testId');
+
+        if (!examId && !testId) return;
 
         const loadTest = async () => {
-            const data = await fetchDailyTest(examId);
+            let data = null;
+            if (testId) {
+                data = await fetchTestById(testId);
+            } else if (examId) {
+                data = await fetchDailyTest(examId);
+            }
+
             if (data) {
                 setTestData(data);
                 setQuestions(data.questions || []);

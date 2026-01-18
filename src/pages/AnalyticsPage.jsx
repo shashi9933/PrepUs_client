@@ -205,7 +205,32 @@ const AnalyticsPage = () => {
                     </div>
                 </div>
 
-                {/* 5. Mistake Intelligence */}
+                {/* 5. Recommended / Available Quizzes */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className={`text-xl font-bold ${theme.text}`}>Available For You</h3>
+                        <a href="/quizzes" className="text-sm text-blue-500 hover:underline">View All</a>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {['Quantitative Aptitude', 'Reasoning Ability', 'English Language'].map((topic, i) => (
+                            <div key={i} className={`p-4 rounded-xl border ${theme.border} ${theme.card} hover:border-blue-500/50 transition-colors group cursor-pointer`}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+                                        <BookOpen className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-1 rounded">15 Q • 15m</span>
+                                </div>
+                                <h4 className={`font-bold ${theme.text} mb-1 group-hover:text-blue-400 transition-colors`}>{topic}</h4>
+                                <p className="text-xs text-gray-500 mb-4">Practice Drill</p>
+                                <button className="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm font-medium transition-colors text-white">
+                                    Start Now
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 6. Mistake Intelligence */}
                 <div className={`p-6 rounded-2xl border ${theme.border} ${theme.card} relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -268,7 +293,7 @@ const AnalyticsPage = () => {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 };
 
