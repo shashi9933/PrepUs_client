@@ -6,7 +6,7 @@ import { User, Mail, Lock, TrendingUp, Users, Award } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
 import logo from '../assets/branding-logo.png';
-import { register } from '../services/api';
+import { register, loginGoogle } from '../services/api';
 
 const SignupPage = () => {
     const { theme } = useTheme();

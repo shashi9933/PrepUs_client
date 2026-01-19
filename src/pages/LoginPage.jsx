@@ -6,7 +6,7 @@ import { Mail, Lock, ArrowRight, Smartphone } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
 import logo from '../assets/branding-logo.png';
-import { sendOtp, verifyOtp, loginEmail } from '../services/api';
+import { sendOtp, verifyOtp, loginEmail, loginGoogle } from '../services/api';
 
 const LoginPage = () => {
     const { theme } = useTheme();

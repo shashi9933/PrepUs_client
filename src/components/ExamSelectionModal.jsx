@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check } from 'lucide-react';
 import VideoLoader from './VideoLoader';
 import { useTheme } from '../context/ThemeContext';
-import { fetchAllExams, fetchCategories } from '../services/api';
+import { fetchAllExams, fetchCategories, loginGoogle } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
