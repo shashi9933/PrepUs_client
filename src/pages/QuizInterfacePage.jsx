@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Timer, AlertTriangle, Loader, CheckCircle, AlertCircle } from 'lucide-react';
@@ -9,7 +9,7 @@ import { submitTestAttempt, fetchTestById } from '../services/api';
 const QuizInterfacePage = () => {
     const { theme } = useTheme();
     const { user, loading: loadingAuth } = useAuth();
-    const [searchParams] = useSearchParams();
+    const { testId: paramTestId } = useParams();
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
@@ -33,8 +33,7 @@ const QuizInterfacePage = () => {
         if (!user) return navigate('/login');
 
         // STRICT MODE: Test ID is mandatory
-        const testId = searchParams.get('testId');
-        if (!testId) {
+        if (!paramTestId) {
             navigate('/quizzes'); // Redirect if no test ID
             return;
         }
@@ -44,7 +43,7 @@ const QuizInterfacePage = () => {
             try {
                 setLoading(true);
                 // 1. Fetch Request (Secure Client handles Auth)
-                const data = await fetchTestById(testId);
+                const data = await fetchTestById(paramTestId);
 
                 // 2. Strict Validation
                 if (!data) {
@@ -85,7 +84,7 @@ const QuizInterfacePage = () => {
             }
         };
         loadTest();
-    }, [user, navigate, searchParams]);
+    }, [user, navigate, paramTestId]);
 
     // Timer Logic for Current Question
     useEffect(() => {

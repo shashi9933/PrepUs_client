@@ -95,8 +95,10 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
         if (selectedExams.length === 0) return;
 
         if (user) {
-            // Already logged in, go to quiz
-            navigate(`/quiz?exams=${selectedExams.join(',')}`);
+            // Already logged in - save selections for quizzes page to handle
+            localStorage.setItem('selectedExams', JSON.stringify(selectedExams));
+            navigate('/quizzes');
+            onClose();
         } else {
             // Show auth options
             setStep('auth');
@@ -123,7 +125,9 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
 
             // Artificial delay to ensure state propagation before navigation
             setTimeout(() => {
-                navigate(`/quiz?exams=${selectedExams.join(',')}`);
+                localStorage.setItem('selectedExams', JSON.stringify(selectedExams));
+                navigate('/quizzes');
+                onClose();
             }, 100);
         } catch (err) {
             console.error('JWT decode failed', err);

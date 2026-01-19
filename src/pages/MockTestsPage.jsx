@@ -37,8 +37,8 @@ const MockTestsPage = () => {
             navigate('/pricing'); // Or show upgrade modal
             return;
         }
-        // Assuming testId maps to something startable
-        navigate(`/quiz?exam=${examId}&mode=mock&testId=${testId}`);
+        // Navigate to quiz with testId as URL parameter
+        navigate(`/quiz/${testId}`);
     };
 
     if (loading) {
