@@ -67,6 +67,9 @@ const QuizzesPage = () => {
         setGeneratingId(template._id);
 
         try {
+            console.log('🎯 Starting quiz generation for template:', template._id);
+            console.log('📋 Template details:', template);
+            
             // New Architecture: Generate from Template ID
             const res = await generateTest({
                 templateId: template._id,
@@ -74,14 +77,19 @@ const QuizzesPage = () => {
                 examId: user.targetExam || 'general-practice'
             });
 
+            console.log('✅ Generation response:', res);
+
             if (res && res.testId) {
+                console.log('🚀 Navigating to quiz:', `/quiz/${res.testId}`);
                 navigate(`/quiz/${res.testId}`);
             } else {
+                console.error('❌ No testId in response:', res);
                 alert('Failed to generate quiz. Please try again.');
             }
         } catch (error) {
-            console.error(error);
-            alert('Something went wrong generating the test.');
+            console.error('❌ Quiz generation error:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            alert(`Error: ${error.response?.data?.error || error.message || 'Something went wrong generating the test'}`);
         } finally {
             setGeneratingId(null);
         }

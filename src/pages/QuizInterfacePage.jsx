@@ -42,16 +42,21 @@ const QuizInterfacePage = () => {
             // ... (rest of logic)
             try {
                 setLoading(true);
+                console.log('🎓 Loading test with ID:', paramTestId);
                 // 1. Fetch Request (Secure Client handles Auth)
                 const data = await fetchTestById(paramTestId);
+                console.log('✅ Test data received:', data);
 
                 // 2. Strict Validation
                 if (!data) {
+                    console.error('❌ Test data is null/undefined');
                     throw new Error('Test not found (404)');
                 }
 
                 // 3. Data Integrity Check
+                console.log('📊 Test structure:', { hasQuestions: !!data.questions, count: data.questions?.length });
                 if (!data.questions || data.questions.length === 0) {
+                    console.error('❌ Test has no questions:', data);
                     throw new Error('Test is empty (No questions linked)');
                 }
 
