@@ -64,8 +64,9 @@ const OnboardingPage = () => {
             });
 
             if (res.user) {
-                // 4. Correct Login Call (Await + No Token)
-                await login(res.user);
+                // 4. Correct Login Call (Preserve Token)
+                const token = localStorage.getItem('token');
+                await login(res.user, token);
                 navigate('/');
             } else {
                 throw new Error("Invalid response from server");
@@ -130,7 +131,7 @@ const OnboardingPage = () => {
                                         <option disabled>Loading exams...</option>
                                     ) : (
                                         availableExams.map(ex => (
-                                            <option key={ex.id} value={ex.category || ex.id}>
+                                            <option key={ex.id} value={ex.id}>
                                                 {ex.title}
                                             </option>
                                         ))
