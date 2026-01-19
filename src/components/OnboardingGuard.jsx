@@ -8,16 +8,16 @@ const OnboardingGuard = ({ children }) => {
 
     if (loading) return <VideoLoader />;
 
-    // If user is logged in but hasn't completed onboarding (checking specific flags or just existence of targetExam)
-    // Adjust logic based on your User model. Assuming 'targetExam' or 'onboardingCompleted' flag.
-    // The previous instructions suggested onboardingStatus or similar. 
-    // Let's use validation of a key field like 'targetExam' or an explicit 'onboardingCompleted' flag if you added one.
+    // Check if user profile is complete using isProfileComplete flag
+    // This flag comes from backend and is stored in localStorage
+    const isProfileComplete = user?.isProfileComplete === true;
 
-    // For now, let's assume if they don't have a name or targetExam, they need onboarding.
-    const isOnboardingComplete = user?.onboardingCompleted || (user?.name && user?.targetExam);
-
-    if (user && !isOnboardingComplete) {
+    if (user && !isProfileComplete) {
         return <Navigate to="/onboarding" replace />;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
     }
 
     return children;

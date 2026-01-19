@@ -34,6 +34,9 @@ export const sendOtp = (phone) =>
 export const verifyOtp = (phone, otp) =>
     safeRequest(() => apiClient.post('/auth/verify-otp', { phone, otp }));
 
+export const fetchCurrentUser = () =>
+    safeRequest(() => apiClient.get('/auth/me'));
+
 export const updateProfile = (data) =>
     safeRequest(() => apiClient.post('/auth/update-profile', data));
 

@@ -2,72 +2,77 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Loader } from 'lucide-react';
+import { Play, Award, Loader, RefreshCcw } from 'lucide-react';
+import { fetchDailyTest, fetchAllExams } from '../services/api';
 import VideoLoader from '../components/VideoLoader';
-import { fetchExamById } from '../services/api';
-
-// Import section components
-import FullMockSection from '../components/quiz-sections/FullMockSection';
-import SectionalSection from '../components/quiz-sections/SectionalSection';
-import BoosterSection from '../components/quiz-sections/BoosterSection';
-import DailyDoseSection from '../components/quiz-sections/DailyDoseSection';
 
 const QuizzesPage = () => {
     const { theme } = useTheme();
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: loadingAuth } = useAuth();
     const navigate = useNavigate();
 
-    const [exam, setExam] = useState(null);
+    const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingExamId, setLoadingExamId] = useState(null);
     const [error, setError] = useState(null);
 
-    // 🎯 CORE RULE: Get exam from user.targetExam
+    // Load exams from backend
     useEffect(() => {
-        if (authLoading) return;
-
+        if (loadingAuth) return;
         if (!user) {
             navigate('/login');
             return;
         }
 
-        // Critical: User must have targetExam selected
-        if (!user.targetExam) {
-            console.warn('⚠️ User has no targetExam set');
-            navigate('/onboarding');
-            return;
-        }
-
-        const loadExamDetails = async () => {
+        const loadExams = async () => {
             try {
                 setLoading(true);
-                console.log('📚 Loading exam details for:', user.targetExam);
-                
-                const examData = await fetchExamById(user.targetExam);
-                
-                if (!examData) {
-                    throw new Error('Exam not found in database');
-                }
-
-                console.log('✅ Exam loaded:', {
-                    title: examData.title,
-                    mockTests: examData.mockTests?.length || 0,
-                    syllabusSections: Object.keys(examData.syllabus || {}).length
-                });
-
-                setExam(examData);
-                setError(null);
+                console.log('📚 Loading exams...');
+                const data = await fetchAllExams();
+                console.log('✅ Exams loaded:', data?.length);
+                setExams(data || []);
             } catch (err) {
-                console.error('❌ Failed to load exam:', err);
-                setError(err.message || 'Failed to load exam details');
+                console.error('❌ Failed to load exams:', err);
+                setError('Failed to load exams');
             } finally {
                 setLoading(false);
             }
         };
 
-        loadExamDetails();
-    }, [user, authLoading, navigate]);
+        loadExams();
+    }, [user, loadingAuth, navigate]);
 
-    if (authLoading) return <VideoLoader />;
+    const handleStartQuiz = async (exam) => {
+        if (!user) return navigate('/login');
+        if (!exam.id) {
+            alert('Invalid exam');
+            return;
+        }
+
+        setLoadingExamId(exam.id);
+
+        try {
+            console.log('🎯 Fetching daily test for exam:', exam.id);
+            
+            // Fetch the daily test directly (no generation)
+            const test = await fetchDailyTest(exam.id);
+            console.log('✅ Daily test fetched:', { testId: test._id, questionsCount: test.questions?.length });
+
+            if (test && test._id) {
+                console.log('🚀 Navigating to quiz:', `/quiz/${test._id}`);
+                navigate(`/quiz/${test._id}`);
+            } else {
+                alert('No test available for this exam today. Please try another exam.');
+            }
+        } catch (err) {
+            console.error('❌ Error fetching daily test:', err);
+            alert(`Error: ${err.response?.data?.error || err.message || 'Failed to load test'}`);
+        } finally {
+            setLoadingExamId(null);
+        }
+    };
+
+    if (loadingAuth) return <VideoLoader />;
 
     if (!user) {
         return (
@@ -80,68 +85,76 @@ const QuizzesPage = () => {
         );
     }
 
-    if (!user.targetExam) {
-        return (
-            <div className={`min-h-screen pt-24 pb-12 ${theme.bg}`}>
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
-                    <h1 className={`text-4xl font-bold mb-4 ${theme.text}`}>Complete Your Profile</h1>
-                    <p className={`${theme.textMuted} mb-8`}>Please select your target exam to access practice materials.</p>
-                    <button
-                        onClick={() => navigate('/onboarding')}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
-                    >
-                        Go to Onboarding
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (loading) return <VideoLoader />;
-
-    if (error) {
-        return (
-            <div className={`min-h-screen pt-24 pb-12 ${theme.bg}`}>
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
-                        <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-                        <h2 className={`text-2xl font-bold mb-2 ${theme.text}`}>Error Loading Exam</h2>
-                        <p className={theme.textMuted}>{error}</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className={`min-h-screen pt-24 pb-12 ${theme.bg}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                {/* Header */}
-                <div className="mb-12">
-                    <h1 className={`text-4xl font-bold mb-2 ${theme.text}`}>
-                        📚 Quiz Hub – {exam?.title}
-                    </h1>
-                    <p className={theme.textMuted}>
-                        Structured practice with Full-length • Sectional • Booster • Daily Dose
+                <div className="text-center mb-12">
+                    <h1 className={`text-4xl font-bold mb-4 ${theme.text}`}>Daily Drills</h1>
+                    <p className={`${theme.textMuted} max-w-2xl mx-auto`}>
+                        Practice with daily curated tests for your exam preparation.
                     </p>
                 </div>
 
-                {/* 4 Sections */}
-                <div className="space-y-12">
-                    {/* 1. Full Mock Tests */}
-                    <FullMockSection exam={exam} examId={user.targetExam} theme={theme} />
+                {error && (
+                    <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+                        {error}
+                    </div>
+                )}
 
-                    {/* 2. Sectional Practice */}
-                    <SectionalSection exam={exam} examId={user.targetExam} theme={theme} />
+                {loading ? (
+                    <VideoLoader />
+                ) : exams.length === 0 ? (
+                    <div className="text-center py-12">
+                        <RefreshCcw className="w-8 h-8 mx-auto mb-4 opacity-50" />
+                        <p className={theme.textMuted}>No exams available at the moment.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {exams.map((exam) => (
+                            <div 
+                                key={exam.id} 
+                                className={`p-6 rounded-2xl border ${theme.sidebar} ${theme.border} ${theme.shadow} hover:scale-[1.02] transition-transform group`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20`}>
+                                        {exam.category || 'General'}
+                                    </span>
+                                    <span className={`text-xs ${theme.textMuted}`}>
+                                        Daily
+                                    </span>
+                                </div>
 
-                    {/* 3. Booster Tests (Weak Areas) */}
-                    <BoosterSection examId={user.targetExam} theme={theme} />
+                                <h3 className={`text-xl font-bold mb-2 ${theme.text} group-hover:text-blue-400 transition-colors`}>
+                                    {exam.title}
+                                </h3>
+                                <p className={`text-sm ${theme.textMuted} mb-4`}>
+                                    {exam.subtitle}
+                                </p>
 
-                    {/* 4. Daily Dose */}
-                    <DailyDoseSection examId={user.targetExam} theme={theme} />
-                </div>
+                                <div className="flex justify-between items-center mt-6 pt-4 border-t border-dashed border-gray-700/30">
+                                    <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                        <div className='flex items-center gap-1'>
+                                            <Award className='w-4 h-4 text-yellow-500' />
+                                            <span className='text-xs'>+50 XP</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleStartQuiz(exam)}
+                                        disabled={loadingExamId !== null}
+                                        className={`p-2 rounded-full shadow-lg shadow-blue-600/20 transition-all ${loadingExamId === exam.id ? 'bg-gray-600 cursor-wait' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                                    >
+                                        {loadingExamId === exam.id ? (
+                                            <Loader className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Play className="w-4 h-4 fill-current" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
