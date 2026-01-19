@@ -78,6 +78,13 @@ const QuizInterfacePage = () => {
                     throw new Error('Test contains invalid question references');
                 }
 
+                // Validate question structure
+                normalizedQuestions.forEach((q, idx) => {
+                    if (!q.questionText) console.warn(`⚠️ Question ${idx} missing questionText`);
+                    if (!q.options || q.options.length === 0) console.warn(`⚠️ Question ${idx} missing options`);
+                    if (q.correctIndex === undefined) console.warn(`⚠️ Question ${idx} missing correctIndex`);
+                });
+
                 setTestData(data);
                 setQuestions(normalizedQuestions);
                 setStartTime(Date.now());
@@ -296,8 +303,27 @@ const QuizInterfacePage = () => {
     if (!questions.length) return <div className="text-center pt-24 text-white">No questions found for this exam.</div>;
 
     const question = questions[currentQuestion];
+    
+    // Safety guards
+    if (!question) {
+        return (
+            <div className="text-center pt-24 text-white">
+                <p>Question not found. Please refresh.</p>
+            </div>
+        );
+    }
+
     const qId = question._id;
     const currentAns = responses[qId]?.selectedOption;
+    
+    // Validate question structure
+    if (!question.questionText || !question.options || question.correctIndex === undefined) {
+        return (
+            <div className="text-center pt-24 text-white">
+                <p>Invalid question data. Please try again.</p>
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen pt-24 pb-12 ${theme.bg}`}>

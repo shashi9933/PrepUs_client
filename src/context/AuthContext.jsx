@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { googleLogout } from '@react-oauth/google';
+import apiClient from '../services/apiClient';
 
 const AuthContext = createContext(null);
 
@@ -22,9 +23,12 @@ export const AuthProvider = ({ children }) => {
         if (storedUser && token) {
             try {
                 const parsed = JSON.parse(storedUser);
-                // Optional: Check token expiry if decoded, otherwise rely on API 401 interceptor
                 setUser(parsed);
-            } catch {
+                // Set auth header for axios
+                apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                console.log('✅ Auth restored from localStorage');
+            } catch (err) {
+                console.error('❌ Failed to restore auth:', err);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
             }
@@ -45,6 +49,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(session));
         if (token) {
             localStorage.setItem('token', token);
+            // Set auth header for axios
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
         return true;
     };
@@ -56,6 +62,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        delete apiClient.defaults.headers.common['Authorization'];
         window.location.href = '/login'; // Force redirect to clear any app state
     };
 
