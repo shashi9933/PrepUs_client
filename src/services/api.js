@@ -43,6 +43,9 @@ export const register = (data) =>
 export const loginEmail = (data) =>
     safeRequest(() => apiClient.post('/auth/login-email', data));
 
+export const loginGoogle = (token) =>
+    safeRequest(() => apiClient.post('/auth/google', { token }));
+
 // --- Tests ---
 
 export const fetchDailyTest = (examId) =>

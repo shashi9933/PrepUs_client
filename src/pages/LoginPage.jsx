@@ -87,17 +87,18 @@ const LoginPage = () => {
         }
     };
 
-    const handleGoogleSuccess = (credentialResponse) => {
-        const decoded = jwtDecode(credentialResponse.credential);
-        const userData = {
-            name: decoded.name,
-            email: decoded.email,
-            picture: decoded.picture,
-            provider: 'google',
-            isProfileComplete: true
-        };
-        login(userData);
-        navigate('/');
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        try {
+            // Send token to backend to get real User ID and Session
+            const res = await loginGoogle(credentialResponse.credential);
+            handleLoginSuccess(res.user, res.token);
+        } catch (error) {
+            console.error('Google Login Error', error);
+            alert('Google Login Failed');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
