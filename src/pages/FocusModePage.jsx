@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { X, Play, Pause, RotateCcw, Zap, Target, Layers, Clock, BookOpen } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Zap, Target, Layers, Clock, BookOpen, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const FocusModePage = () => {
     const { theme } = useTheme();
@@ -10,33 +11,65 @@ const FocusModePage = () => {
     const [config, setConfig] = useState(null);
     const [timeLeft, setTimeLeft] = useState(0);
     const [isActive, setIsActive] = useState(false);
-    const [activeTab, setActiveTab] = useState(''); // Current feature view
+    const [activeTab, setActiveTab] = useState(null); // Initialize as null for safety
 
+    // Prevent accidental navigation
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (isActive) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isActive]);
+
+    // Load Config Safely
     useEffect(() => {
         const savedConfig = localStorage.getItem('focusConfig');
         if (savedConfig) {
-            const parsed = JSON.parse(savedConfig);
-            setConfig(parsed);
-            setTimeLeft(parsed.duration * 60);
-            setIsActive(true);
-            if (parsed.features.length > 0) setActiveTab(parsed.features[0]);
+            try {
+                const parsed = JSON.parse(savedConfig);
+                if (!parsed.duration || !parsed.features) throw new Error("Invalid config");
+
+                setConfig(parsed);
+                setTimeLeft(parsed.duration * 60);
+                setIsActive(false); // Fix: Do not auto-start
+
+                if (parsed.features && parsed.features.length > 0) {
+                    setActiveTab(parsed.features[0]);
+                }
+            } catch (err) {
+                console.error("Config load error", err);
+                localStorage.removeItem('focusConfig');
+                navigate('/');
+            }
         } else {
             navigate('/');
         }
     }, [navigate]);
 
+    // Robust Timer Logic
     useEffect(() => {
-        let interval = null;
-        if (isActive && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft(timeLeft => timeLeft - 1);
-            }, 1000);
-        } else if (timeLeft === 0) {
-            clearInterval(interval);
-            setIsActive(false);
-        }
+        if (!isActive) return;
+
+        const interval = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    setIsActive(false);
+                    // Timer Completion Logic
+                    toast.success('Focus session completed! Great job!');
+                    // Here you would typically save the session to the backend
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
         return () => clearInterval(interval);
-    }, [isActive, timeLeft]);
+    }, [isActive]);
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -53,7 +86,11 @@ const FocusModePage = () => {
     };
 
     const handleExit = () => {
-        if (window.confirm("Are you sure you want to leave Focus Mode? progress might be lost.")) {
+        if (isActive && timeLeft > 0) {
+            if (window.confirm("Are you sure you want to exit? Your focus session progress will be lost.")) {
+                navigate('/');
+            }
+        } else {
             navigate('/');
         }
     };
@@ -68,13 +105,13 @@ const FocusModePage = () => {
                         <Zap className="w-16 h-16 text-yellow-400 mb-4" />
                         <h2 className={`text-2xl font-bold ${theme.text}`}>Quick Quiz Mode</h2>
                         <p className={theme.textMuted}>Fetching specialized questions for {config.exams.join(', ')}...</p>
-                        {/* Placeholder for Quiz Component */}
-                        <div className="mt-8 p-6 border border-dashed border-gray-600 rounded-xl">
-                            Quiz Content Would Load Here
+                        <div className={`mt-8 p-6 border border-dashed ${theme.border} rounded-xl w-full max-w-lg`}>
+                            <p className={theme.textMuted}>Quiz Component Placeholder</p>
                         </div>
                     </div>
                 );
-            case 'news':
+            case 'news': // Using 'news' ID from featureIcons map below (assuming standard is 'news')
+            case 'current_affairs': // Handle potential ID mismatch
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {[1, 2, 3, 4].map(i => (
@@ -83,20 +120,27 @@ const FocusModePage = () => {
                                     <span className="text-xs font-bold text-blue-500 uppercase">Current Affairs</span>
                                     <span className={`text-xs ${theme.textMuted}`}>2 mins ago</span>
                                 </div>
-                                <h3 className={`text-lg font-bold mb-2 ${theme.text}`}>Major Economic Policy Shift Announced by RBI</h3>
+                                <h3 className={`text-lg font-bold mb-2 ${theme.text}`}>Major Policy Update</h3>
                                 <p className={`text-sm ${theme.textMuted} line-clamp-3`}>
-                                    The Reserve Bank of India has today announced a significant change in the repo rate structure aimed at controlling inflation while sustaining growth...
+                                    Latest updates relevant to your exam preparation...
                                 </p>
                             </div>
                         ))}
                     </div>
                 );
-            // ... Add other cases as needed
+            case 'hot_questions':
+                return (
+                    <div className="flex flex-col items-center justify-center h-full text-center opacity-70">
+                        <Target className="w-16 h-16 mb-4 text-red-400" />
+                        <h2 className={`text-xl font-bold ${theme.text}`}>Hot Questions</h2>
+                        <p className={theme.textMuted}>High-probability questions for {config.exams[0]}</p>
+                    </div>
+                );
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-center opacity-50">
-                        <Layers className="w-16 h-16 mb-4" />
-                        <h2 className="text-xl font-bold">Select a feature from the sidebar</h2>
+                        <Layers className={`w-16 h-16 mb-4 ${theme.textMuted}`} />
+                        <h2 className={`text-xl font-bold ${theme.textMuted}`}>Select a feature from the sidebar</h2>
                     </div>
                 );
         }
@@ -116,21 +160,36 @@ const FocusModePage = () => {
 
             {/* Top Bar - Distraction Free */}
             <div className={`h-16 border-b ${theme.border} ${theme.sidebar} flex items-center justify-between px-6 z-50`}>
-                <div className="flex items-center space-x-2">
-                    <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                    <span className={`font-bold text-lg tracking-wider ${theme.text}`}>FOCUS MODE</span>
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                        <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                        <span className={`font-bold text-lg tracking-wider ${theme.text}`}>FOCUS MODE</span>
+                    </div>
+                    {/* Focus Goal Display */}
+                    <div className={`hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border ${theme.border}`}>
+                        <Target className="w-3 h-3 text-blue-400" />
+                        <span className={`text-xs ${theme.textMuted}`}>Goal: {config.duration} min • {config.exams.join(', ')}</span>
+                    </div>
                 </div>
 
                 {/* Timer Display */}
                 <div className="flex items-center space-x-6">
-                    <div className={`font-mono text-3xl font-bold ${timeLeft < 300 ? 'text-red-500 animate-pulse' : theme.text}`}>
+                    <div className={`font-mono text-3xl font-bold transition-colors duration-300 ${timeLeft < 300 ? 'text-red-500 animate-pulse' : theme.text}`}>
                         {formatTime(timeLeft)}
                     </div>
                     <div className="flex space-x-2">
-                        <button onClick={toggleTimer} className={`p-2 rounded-full hover:bg-white/10 ${theme.text}`}>
+                        <button
+                            onClick={toggleTimer}
+                            className={`p-2 rounded-full hover:bg-white/10 ${theme.text} transition-colors`}
+                            title={isActive ? "Pause" : "Start"}
+                        >
                             {isActive ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                         </button>
-                        <button onClick={resetTimer} className={`p-2 rounded-full hover:bg-white/10 ${theme.text}`}>
+                        <button
+                            onClick={resetTimer}
+                            className={`p-2 rounded-full hover:bg-white/10 ${theme.text} transition-colors`}
+                            title="Reset Timer"
+                        >
                             <RotateCcw className="w-5 h-5" />
                         </button>
                     </div>
@@ -150,14 +209,18 @@ const FocusModePage = () => {
                 <div className={`w-20 md:w-64 border-r ${theme.border} ${theme.sidebar} flex flex-col py-6`}>
                     <div className="space-y-2 px-3">
                         {config.features.map(fId => {
-                            const Icon = featureIcons[fId] || Layers;
+                            // Check for both ID variations just in case
+                            let Icon = featureIcons[fId] || Layers;
+                            // Alias check for news/current_affairs
+                            if (fId === 'current_affairs' && !featureIcons[fId]) Icon = featureIcons['news'];
+
                             return (
                                 <button
                                     key={fId}
                                     onClick={() => setActiveTab(fId)}
                                     className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all ${activeTab === fId
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                            : `hover:bg-white/5 ${theme.textMuted} hover:${theme.text}`
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                        : `hover:bg-white/5 ${theme.textMuted} hover:text-white`
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />
@@ -185,7 +248,7 @@ const FocusModePage = () => {
                 <div className="flex-1 overflow-y-auto p-8 relative">
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-5">
-                        {/* Optional grid pattern or texture */}
+                        {/* Subtle texture if needed */}
                     </div>
 
                     <div className="max-w-5xl mx-auto">

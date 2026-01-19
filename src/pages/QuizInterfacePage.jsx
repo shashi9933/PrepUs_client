@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { Timer, AlertTriangle, Loader, CheckCircle } from 'lucide-react';
+import { Timer, AlertTriangle, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import VideoLoader from '../components/VideoLoader';
-import { fetchDailyTest, submitTestAttempt, fetchTestById } from '../services/api';
+import { submitTestAttempt, fetchTestById } from '../services/api';
 
 const QuizInterfacePage = () => {
     const { theme } = useTheme();
-    const { user } = useAuth();
+    const { user, loading: loadingAuth } = useAuth();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -25,41 +25,77 @@ const QuizInterfacePage = () => {
 
     const [submitting, setSubmitting] = useState(false);
     const [analysis, setAnalysis] = useState(null);
+    const [error, setError] = useState(null);
 
     // Initial Fetch
     useEffect(() => {
+        if (loadingAuth) return; // Wait for Auth check
         if (!user) return navigate('/login');
 
-        const examId = searchParams.get('exam');
+        // STRICT MODE: Test ID is mandatory
         const testId = searchParams.get('testId');
-
-        if (!examId && !testId) return;
+        if (!testId) {
+            navigate('/quizzes'); // Redirect if no test ID
+            return;
+        }
 
         const loadTest = async () => {
-            let data = null;
-            if (testId) {
-                data = await fetchTestById(testId);
-            } else if (examId) {
-                data = await fetchDailyTest(examId);
-            }
+            // ... (rest of logic)
+            try {
+                setLoading(true);
+                // 1. Fetch Request (Secure Client handles Auth)
+                const data = await fetchTestById(testId);
 
-            if (data) {
+                // 2. Strict Validation
+                if (!data) {
+                    throw new Error('Test not found (404)');
+                }
+
+                // 3. Data Integrity Check
+                if (!data.questions || data.questions.length === 0) {
+                    throw new Error('Test is empty (No questions linked)');
+                }
+
+                // 4. Normalize Data Structure (Robust against Schema V1 vs V2)
+                const normalizedQuestions = data.questions.map(q => {
+                    if (q.questionId && typeof q.questionId === 'object') {
+                        // V2: Nested Reference { questionId: Obj, order: 1 }
+                        return { ...q.questionId, _order: q.order };
+                    }
+                    if (q._id) {
+                        // V1: Direct Reference (legacy) or Flattened
+                        return q;
+                    }
+                    console.warn("Invalid Question Format:", q);
+                    return null;
+                }).filter(Boolean); // Remove nulls
+
+                if (normalizedQuestions.length === 0) {
+                    throw new Error('Test contains invalid question references');
+                }
+
                 setTestData(data);
-                setQuestions(data.questions || []);
-                setStartTime(Date.now()); // Start timer for Q1
+                setQuestions(normalizedQuestions);
+                setStartTime(Date.now());
+            } catch (err) {
+                console.error("Test Load Error:", err);
+                setError(err.message || "Failed to load test");
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         loadTest();
     }, [user, navigate, searchParams]);
 
     // Timer Logic for Current Question
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeSpentOnCurrent(Date.now() - startTime);
-        }, 100);
-        return () => clearInterval(timer);
-    }, [startTime]);
+        if (!loading && !analysis) {
+            const timer = setInterval(() => {
+                setTimeSpentOnCurrent(Date.now() - startTime);
+            }, 100);
+            return () => clearInterval(timer);
+        }
+    }, [startTime, loading, analysis]);
 
     const handleAnswer = (optionIndex) => {
         // Just select, don't submit yet
@@ -99,14 +135,6 @@ const QuizInterfacePage = () => {
     const submitQuiz = async () => {
         setSubmitting(true);
 
-        // Finalize last question time if not already done (handleNext does it usually, but if 'Finish' button calls this directly)
-        // Note: handleNext calls this, so time is recorded. 
-        // But we need to construct the payload array
-
-        // Wait a tick for state update if needed, or construct from local vars
-        // Actually, handleNext updates state. React batching might be tricky.
-        // Safer to construct payload from 'responses' + current Q update
-
         const qId = questions[currentQuestion]._id;
         const timeForLastQ = (Date.now() - startTime) / 1000;
 
@@ -117,7 +145,7 @@ const QuizInterfacePage = () => {
         };
 
         const payload = {
-            userId: user.id || 'guest', // In real app, user.id from auth
+            userId: user.id || 'guest',
             testId: testData._id,
             examId: testData.examId,
             totalTimeTaken: totalTestTime + timeForLastQ,
@@ -128,12 +156,35 @@ const QuizInterfacePage = () => {
             }))
         };
 
-        const result = await submitTestAttempt(payload);
-        setAnalysis(result?.analysis);
-        setSubmitting(false);
+        try {
+            const result = await submitTestAttempt(payload);
+            setAnalysis(result?.analysis);
+        } catch (err) {
+            console.error("Submission failed", err);
+            alert("Failed to submit test. Please check your connection.");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     if (loading) return <VideoLoader />;
+
+    // Hard Error State
+    if (error) {
+        return (
+            <div className={`min-h-screen pt-24 ${theme.bg} text-white flex flex-col items-center justify-center`}>
+                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Oops!</h2>
+                <p className="text-gray-400 mb-6">{error}</p>
+                <button
+                    onClick={() => navigate('/quizzes')}
+                    className="px-6 py-2 bg-blue-600 rounded-lg font-bold hover:bg-blue-700 transition"
+                >
+                    Back to Quizzes
+                </button>
+            </div>
+        );
+    }
 
     // --- Analysis View (Simple Success State for now) ---
     if (analysis) {
@@ -178,6 +229,9 @@ const QuizInterfacePage = () => {
                         )}
 
                         <div className="flex gap-4">
+                            <button onClick={() => navigate('/analytics')} className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+                                View Full Analytics
+                            </button>
                             <button onClick={() => navigate('/')} className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200">
                                 Back to Dashboard
                             </button>

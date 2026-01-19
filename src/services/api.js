@@ -1,153 +1,68 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import apiClient from './apiClient';
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    const headers = {
-        'Content-Type': 'application/json',
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
-
-// Helper function for fetch with auth
-const fetchWithAuth = (url, options = {}) => {
-    return fetch(url, {
-        ...options,
-        headers: {
-            ...getAuthHeaders(),
-            ...options.headers
-        },
-        credentials: 'include' // Include cookies/credentials
-    });
-};
-
-export const fetchAllExams = async (category = null) => {
+// Helper to safely extract data or return default
+const safeRequest = async (request, defaultValue = null) => {
     try {
-        let url = `${API_URL}/exams`;
-        if (category) url += `?category=${category}`;
-
-        const response = await fetchWithAuth(url);
-        if (!response.ok) throw new Error(`Failed to fetch exams: ${response.status}`);
-        return await response.json();
+        const response = await request();
+        return response.data;
     } catch (error) {
-        console.error("API Error:", error);
-        return [];
+        console.error("API Request Failed:", error?.response?.data || error.message);
+        // Throw proper error for UI to handle if needed, or return default
+        if (defaultValue !== undefined) return defaultValue;
+        throw error;
     }
 };
 
-export const fetchCategories = async () => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/categories`);
-        if (!response.ok) throw new Error(`Failed to fetch categories: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return [];
-    }
+// --- Exams & Categories ---
+
+export const fetchAllExams = (category = null) => {
+    const url = category ? `/exams?category=${category}` : '/exams';
+    return safeRequest(() => apiClient.get(url), []);
 };
 
-export const fetchExamById = async (id) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/exams/${id}`);
-        if (!response.ok) throw new Error(`Network response was not ok: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error(`Failed to fetch exam ${id}:`, error);
-        return null;
-    }
-};
+export const fetchCategories = () =>
+    safeRequest(() => apiClient.get('/categories'), []);
 
-// Auth
+export const fetchExamById = (id) =>
+    safeRequest(() => apiClient.get(`/exams/${id}`));
+
+// --- Auth ---
+
 export const sendOtp = (phone) =>
-    fetchWithAuth(`${API_URL}/auth/send-otp`, {
-        method: 'POST',
-        body: JSON.stringify({ phone }),
-    }).then(res => res.json());
+    safeRequest(() => apiClient.post('/auth/send-otp', { phone }));
 
 export const verifyOtp = (phone, otp) =>
-    fetchWithAuth(`${API_URL}/auth/verify-otp`, {
-        method: 'POST',
-        body: JSON.stringify({ phone, otp }),
-    }).then(res => res.json());
+    safeRequest(() => apiClient.post('/auth/verify-otp', { phone, otp }));
 
 export const updateProfile = (data) =>
-    fetchWithAuth(`${API_URL}/auth/update-profile`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-    }).then(res => res.json());
+    safeRequest(() => apiClient.post('/auth/update-profile', data));
 
 export const register = (data) =>
-    fetchWithAuth(`${API_URL}/auth/register`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-    }).then(res => res.json());
+    safeRequest(() => apiClient.post('/auth/register', data));
 
 export const loginEmail = (data) =>
-    fetchWithAuth(`${API_URL}/auth/login-email`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-    }).then(res => res.json());
+    safeRequest(() => apiClient.post('/auth/login-email', data));
 
-export const fetchDailyTest = async (examId) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/tests/daily/${examId}`);
-        if (!response.ok) throw new Error(`Failed to fetch daily test: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return null;
-    }
-};
+// --- Tests ---
 
-export const submitTestAttempt = async (payload) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/tests/submit`, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error(`Failed to submit test: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return null;
-    }
-};
+export const fetchDailyTest = (examId) =>
+    safeRequest(() => apiClient.get(`/tests/daily/${examId}`));
 
-export const fetchAnalytics = async (userId) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/analytics/dashboard?userId=${userId}`);
-        if (!response.ok) throw new Error(`Failed to fetch analytics: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return null; // Return null to handle UI loading/error states
-    }
-};
+export const submitTestAttempt = (payload) =>
+    safeRequest(() => apiClient.post('/tests/submit', payload));
 
-export const generateTest = async (payload) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/tests/generate`, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error(`Failed to generate test: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return null;
-    }
-};
+export const fetchTestById = (testId) =>
+    safeRequest(() => apiClient.get(`/tests/${testId}`));
 
-export const fetchTestById = async (testId) => {
-    try {
-        const response = await fetchWithAuth(`${API_URL}/tests/${testId}`);
-        if (!response.ok) throw new Error(`Failed to fetch test: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("API Error:", error);
-        return null;
-    }
-};
+export const fetchQuizTemplates = (category = 'All') =>
+    safeRequest(() => apiClient.get(`/tests/templates?category=${category}`), []);
+
+// --- Generation (Legacy/Strictly Controlled) ---
+
+export const generateTest = (payload) =>
+    safeRequest(() => apiClient.post('/tests/generate', payload));
+
+// --- Analytics ---
+
+export const fetchAnalytics = (userId, timeRange = '30d') =>
+    safeRequest(() => apiClient.get(`/analytics/dashboard?userId=${userId}&range=${timeRange}`));

@@ -1,37 +1,66 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { googleLogout, useGoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from "jwt-decode";
+import { googleLogout } from '@react-oauth/google';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Check for existing session
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+        const token = localStorage.getItem('token');
+
+        if (storedUser && token) {
+            try {
+                const parsed = JSON.parse(storedUser);
+                // Optional: Check token expiry if decoded, otherwise rely on API 401 interceptor
+                setUser(parsed);
+            } catch {
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+            }
+        } else {
+            // Clean up partial state
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
         }
+        setLoading(false);
     }, []);
 
-    const login = (userData, token) => {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        if (token) localStorage.setItem('token', token);
+    const login = async (userData, token) => {
+        const session = {
+            ...userData,
+            loggedInAt: Date.now()
+        };
+        setUser(session);
+        localStorage.setItem('user', JSON.stringify(session));
+        if (token) {
+            localStorage.setItem('token', token);
+        }
+        return true;
     };
 
     const logout = () => {
-        googleLogout();
+        if (user?.provider === 'google') {
+            googleLogout();
+        }
         setUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        window.location.href = '/login'; // Force redirect to clear any app state
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

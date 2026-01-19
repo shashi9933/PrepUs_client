@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Search, ChevronRight, Check } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Check } from 'lucide-react';
 import VideoLoader from './VideoLoader';
 import { useTheme } from '../context/ThemeContext';
 import { fetchAllExams, fetchCategories } from '../services/api';
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import toast from 'react-hot-toast';
 
 const ExamSelectionModal = ({ isOpen, onClose }) => {
     const { theme } = useTheme();
@@ -17,32 +18,72 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedExams, setSelectedExams] = useState([]);
     const [step, setStep] = useState('select'); // 'select', 'auth'
 
+    // Persistence: Load on mount
     useEffect(() => {
-        if (isOpen) {
-            const loadData = async () => {
-                setLoading(true);
-                try {
-                    const [examsData, catsData] = await Promise.all([
-                        fetchAllExams(),
-                        fetchCategories()
-                    ]);
-                    setExams(examsData);
-                    setCategories([{ id: 'all', name: 'All Exams' }, ...catsData]);
-                } catch (error) {
-                    console.error("Failed to load data", error);
-                }
-                setLoading(false);
-            };
-            loadData();
+        const saved = localStorage.getItem('selectedExams');
+        if (saved) {
+            try {
+                setSelectedExams(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse saved exams", e);
+            }
         }
+    }, []);
+
+    // Persistence: Save on change
+    useEffect(() => {
+        localStorage.setItem('selectedExams', JSON.stringify(selectedExams));
+    }, [selectedExams]);
+
+    // Accessibility: Escape key
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (isOpen && e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEsc);
+        return () => document.removeEventListener('keydown', handleEsc);
+    }, [isOpen, onClose]);
+
+    // Reset state & Load Data on Open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        // Use batch updates or separate logic to avoid synchronous setState warnings if possible
+        // But here we just need to ensuring we reset only when opening
+        setStep('select');
+        setSelectedCategory('all');
+        setError(null);
+
+        const loadData = async () => {
+            // ...
+            // Logic remains same
+            try {
+                setLoading(true);
+                const [examsData, catsData] = await Promise.all([
+                    fetchAllExams(),
+                    fetchCategories()
+                ]);
+                setExams(examsData);
+                setCategories([{ id: 'all', name: 'All Exams' }, ...catsData]);
+            } catch (error) {
+                console.error("Failed to load data", error);
+                setError('Failed to load exams. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, [isOpen]);
 
-    const filteredExams = selectedCategory === 'all'
-        ? exams
-        : exams.filter(e => e.category === selectedCategory);
+    // Filtering: Memoized and Safer
+    const filteredExams = useMemo(() => {
+        if (selectedCategory === 'all') return exams;
+        return exams.filter(e => String(e.category) === String(selectedCategory));
+    }, [exams, selectedCategory]);
 
     const toggleSelection = (id) => {
         setSelectedExams(prev =>
@@ -50,7 +91,7 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
         );
     };
 
-    const handleStartQuiz = () => {
+    const handleStartQuiz = async () => {
         if (selectedExams.length === 0) return;
 
         if (user) {
@@ -62,22 +103,42 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleGoogleSuccess = (credentialResponse) => {
-        const decoded = jwtDecode(credentialResponse.credential);
-        const userData = {
-            name: decoded.name,
-            email: decoded.email,
-            picture: decoded.picture,
-            provider: 'google'
-        };
-        login(userData);
-        navigate(`/quiz?exams=${selectedExams.join(',')}`);
+    const handleGoogleSuccess = async (credentialResponse) => {
+        if (!credentialResponse?.credential) {
+            console.error('Google login failed: no credential');
+            toast.error('Google login failed');
+            return;
+        }
+
+        try {
+            const decoded = jwtDecode(credentialResponse.credential);
+            const userData = {
+                name: decoded.name,
+                email: decoded.email,
+                picture: decoded.picture,
+                provider: 'google'
+            };
+
+            await login(userData);
+
+            // Artificial delay to ensure state propagation before navigation
+            setTimeout(() => {
+                navigate(`/quiz?exams=${selectedExams.join(',')}`);
+            }, 100);
+        } catch (err) {
+            console.error('JWT decode failed', err);
+            toast.error('Login Failed');
+        }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            role="dialog"
+            aria-modal="true"
+        >
             <div className={`w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl border ${theme.border} ${theme.sidebar} relative flex flex-col`}>
 
                 {/* Header */}
@@ -85,7 +146,11 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
                     <h2 className={`text-2xl font-bold ${theme.text}`}>
                         {step === 'select' ? 'Select Exams' : 'Sign In to Start'}
                     </h2>
-                    <button onClick={onClose} className={`${theme.textMuted} hover:${theme.text}`}>
+                    <button
+                        onClick={onClose}
+                        className={`${theme.textMuted} hover:text-white transition-colors`}
+                        aria-label="Close modal"
+                    >
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -112,7 +177,11 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
                                 ))}
                             </div>
 
-                            {loading ? (
+                            {error ? (
+                                <div className="text-red-400 text-center py-6 border border-red-500/20 rounded-xl bg-red-500/10">
+                                    {error}
+                                </div>
+                            ) : loading ? (
                                 <VideoLoader />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -124,10 +193,12 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
                                                 ? 'bg-blue-600 border-blue-500 text-white'
                                                 : `bg-white/5 border-white/10 ${theme.text} hover:bg-white/10`
                                                 }`}
+                                            role="checkbox"
+                                            aria-checked={selectedExams.includes(exam.id)}
                                         >
                                             <div className="overflow-hidden">
-                                                <span className="font-medium block truncate">{exam.title}</span>
-                                                <span className="text-xs opacity-70 block truncate">{exam.subtitle}</span>
+                                                <span className="font-medium block truncate" title={exam.title}>{exam.title}</span>
+                                                <span className="text-xs opacity-70 block truncate" title={exam.subtitle}>{exam.subtitle}</span>
                                             </div>
                                             {selectedExams.includes(exam.id) && <Check className="w-5 h-5 flex-shrink-0" />}
                                         </div>
@@ -150,6 +221,7 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
                                     onSuccess={handleGoogleSuccess}
                                     onError={() => {
                                         console.log('Login Failed');
+                                        toast.error('Google Sign-In Failed');
                                     }}
                                     theme={theme.isDark ? 'filled_black' : 'outline'}
                                     shape="pill"
@@ -164,7 +236,7 @@ const ExamSelectionModal = ({ isOpen, onClose }) => {
 
                             <button
                                 onClick={() => navigate('/login')}
-                                className={`w-full max-w-xs py-2 rounded-full border ${theme.border} ${theme.text} hover:bg-white/10 font-medium`}
+                                className={`w-full max-w-xs py-2 rounded-full border ${theme.border} ${theme.text} hover:bg-white/10 font-medium transition-colors`}
                             >
                                 Continue with Email
                             </button>

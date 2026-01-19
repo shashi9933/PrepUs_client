@@ -23,6 +23,7 @@ import ContactUs from './pages/ContactUs';
 import Terms from './pages/Terms';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import OnboardingPage from './pages/OnboardingPage';
+import DailyTestIntroPage from './pages/DailyTestIntroPage';
 
 // Home Component (Refactored from previous App.jsx)
 // We create a simpler wrapper for the Landing Page content
@@ -52,6 +53,11 @@ const HomePage = () => (
   </>
 );
 
+import ProtectedRoute from './components/ProtectedRoute';
+import OnboardingGuard from './components/OnboardingGuard';
+
+// ... (other imports remain the same, ensuring imports are present)
+
 function App() {
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
@@ -65,23 +71,112 @@ function App() {
 
               <main className="flex-grow">
                 <Routes>
+                  {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/exams" element={<AllExamsPage />} />
-                  <Route path="/exams/:examId" element={<ExamDetailPage />} />
-                  <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
-                  <Route path="/exams/:examId/study-plan" element={<StudyPlanPage />} />
-                  <Route path="/exams/:examId/mock-tests" element={<MockTestsPage />} />
-                  <Route path="/quizzes" element={<QuizzesPage />} />
-                  <Route path="/leaderboard" element={<LeaderboardPage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/contact" element={<ContactUs />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/quiz" element={<QuizInterfacePage />} />
-                  <Route path="/onboarding" element={<OnboardingPage />} />
+
+                  {/* Authenticated but Onboarding Required */}
+                  <Route
+                    path="/onboarding"
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Fully Protected Routes (Auth + Onboarding) */}
+                  <Route
+                    path="/analytics"
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingGuard>
+                          <AnalyticsPage />
+                        </OnboardingGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/focus"
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingGuard>
+                          <FocusModePage />
+                        </OnboardingGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/quiz/:testId"
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingGuard>
+                          <QuizInterfacePage />
+                        </OnboardingGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/daily-test/:examId"
+                    element={
+                      <ProtectedRoute>
+                        <DailyTestIntroPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/leaderboard"
+                    element={
+                      <ProtectedRoute>
+                        <LeaderboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Exam Routes - Publicly visible content, but actions might be protected within pages */}
+                  <Route path="/exams" element={<AllExamsPage />} />
+                  <Route path="/exams/:examId" element={<ExamDetailPage />} />
+
+                  <Route
+                    path="/exams/:examId/mock-tests"
+                    element={
+                      <ProtectedRoute>
+                        <MockTestsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/exams/:examId/study-plan"
+                    element={
+                      <ProtectedRoute>
+                        <StudyPlanPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/quizzes"
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingGuard>
+                          <QuizzesPage />
+                        </OnboardingGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
 
